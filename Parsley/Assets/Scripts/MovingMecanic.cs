@@ -11,6 +11,16 @@ public class MovingMecanic : MonoBehaviour {
 	// -- Target Object is Found or Not
 	public bool targetFound = false;
 
+	// -- In Motion (Plant doesn't move until motion)
+	public bool inMotion = false;
+
+	// -- If the player is entering from outside.
+	public bool isEntering = false;
+
+
+	// Entering
+	Vector3 enteringTargetPos;
+
 	// MOVE
 	float movingSpeed;
 	public float minSpeed = 2.0f;
@@ -67,74 +77,119 @@ public class MovingMecanic : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
-		// Random MOVE
-		if (!targetFound) {
-			// -- Move
-			if (moving) {
-				if (movingSpeed > 0) {
-					movingSpeed -= 0.05f;
-				}
+
+		// -- if 2D
+		//transform.eulerAngles.z = transform.eulerAngles.x = 0;
+		//transform.position.y = 0;
+
+
+		// ONBORDING
+		// -- moves until target area
+		if (isEntering) {
+			cc.Move (transform.forward * movingSpeed * Time.deltaTime);
+
+			if (transform.position.x > -rangeX * .8 && transform.position.x < rangeX * .8 && transform.position.z > -rangeZ * .8 && transform.position.z < rangeZ * .8) {
+				isEntering = false;
+				inMotion = true;
 			}
-
-			// -- Counting
-			if (movingCounter > 0)
-				movingCounter--;
-			else if (moving) {
-				moving = false;
-				StartCoroutine (MovingUpdate ());
-			}
-
-			// Rotate
-			if (Mathf.Abs (targetRotation - transform.rotation.y) > 0.1f)
-				deltaRotation = targetRotation - transform.rotation.y;
-
-			transform.RotateAround (transform.position, Vector3.up, deltaRotation * 100.0f * Time.deltaTime);
-
-		} else {
-
-			// Move Toward
-			transform.LookAt (targetPosition);
-			cc.Move (transform.forward * movingSpeed * 0.9f * Time.deltaTime);
 		}
-
 
 		// MOVE
-		if (rangeX > transform.position.x && -1 * rangeX < transform.position.x && rangeZ > transform.position.z && -1 * rangeZ < transform.position.z) {
-			//Debug.Log ("In the range");
-			cc.Move (transform.forward * movingSpeed * Time.deltaTime);
-		} else if (
-			// Relieving from left
-			rangeX <= transform.position.x && transform.eulerAngles.y > 225 && transform.eulerAngles.y < 315 ||
-			// Relieving from right
-			-1 * rangeX >= transform.position.x && transform.eulerAngles.y > 45 && transform.eulerAngles.y < 135 ||
-			// Relieving from top
-			rangeZ <= transform.position.z && transform.eulerAngles.y > 135 && transform.eulerAngles.y < 225 ||
-			// Relieving from bottom Rotation 1
-			-1 * rangeZ >= transform.position.z && transform.eulerAngles.y < 45 ||
-			// Relieving from bottom Rotation 2
-			-1 * rangeZ >= transform.position.z && transform.eulerAngles.y > 315
-		) {
-			//Debug.Log ("Recovering");
-			cc.Move (transform.forward * movingSpeed * Time.deltaTime);
-		} else {
-			//Debug.Log ("Failed");
+		// Move only if it is in motion
+		if (inMotion) {
+			
+			// Random MOVE
+			if (!targetFound) {
+				// -- Move
+				if (moving) {
+					if (movingSpeed > 0) {
+						movingSpeed -= 0.05f;
+					}
+				}
 
-		}
+				// -- Counting
+				if (movingCounter > 0)
+					movingCounter--;
+				else if (moving) {
+					moving = false;
+					StartCoroutine (MovingUpdate ());
+				}
+
+				// Rotate
+				if (Mathf.Abs (targetRotation - transform.rotation.y) > 0.1f)
+					deltaRotation = targetRotation - transform.rotation.y;
+
+				transform.RotateAround (transform.position, Vector3.up, deltaRotation * 100.0f * Time.deltaTime);
+
+			} else {
+
+				// Move Toward
+				transform.LookAt (targetPosition);
+				cc.Move (transform.forward * movingSpeed * 0.9f * Time.deltaTime);
+			}
 
 
-
-		// -- Check
-		if (isTargetable) {
-			targetFound = true;
-			if(isDamageable){
+			// MOVE
+			if (rangeX > transform.position.x && -1 * rangeX < transform.position.x && rangeZ > transform.position.z && -1 * rangeZ < transform.position.z) {
+				//Debug.Log ("In the range");
+				cc.Move (transform.forward * movingSpeed * Time.deltaTime);
+			} else if (
+				// Relieving from left
+				rangeX <= transform.position.x && transform.eulerAngles.y > 225 && transform.eulerAngles.y < 315 ||
+				// Relieving from right
+				-1 * rangeX >= transform.position.x && transform.eulerAngles.y > 45 && transform.eulerAngles.y < 135 ||
+				// Relieving from top
+				rangeZ <= transform.position.z && transform.eulerAngles.y > 135 && transform.eulerAngles.y < 225 ||
+				// Relieving from bottom Rotation 1
+				-1 * rangeZ >= transform.position.z && transform.eulerAngles.y < 45 ||
+				// Relieving from bottom Rotation 2
+				-1 * rangeZ >= transform.position.z && transform.eulerAngles.y > 315) {
+				//Debug.Log ("Recovering");
+				cc.Move (transform.forward * movingSpeed * Time.deltaTime);
+			} else {
+				//Debug.Log ("Failed");
 
 			}
-		} else {
-			targetFound = false;
+
+
+
+			// -- Check
+			if (isTargetable) {
+				targetFound = true;
+				if (isDamageable) {
+
+				}
+			} else {
+				targetFound = false;
+			}
+
 		}
+
+
 			
 	}
-		
+
+	// Entering
+	public void Onboarding(){
+
+		// Random Positioning
+		int temp = Random.Range(0,4);
+		if (temp < 1) {
+			transform.position = new Vector3 (-2 * rangeX, 0, Random.Range(-rangeZ, rangeZ));
+		} else if (temp < 2) {
+			transform.position = new Vector3 (2 * rangeX, 0, Random.Range(-rangeZ, rangeZ));
+		} else if (temp < 3) {
+			transform.position = new Vector3 (Random.Range(-rangeX, rangeX), 0, -2 * rangeX);
+		} else {
+			transform.position = new Vector3 (Random.Range(-rangeX, rangeX), 0, 2 * rangeX);
+		}
+
+		// Entering
+		enteringTargetPos = new Vector3(Random.Range(-rangeX, rangeX), 0, Random.Range(-rangeZ, rangeZ));
+		transform.LookAt (enteringTargetPos);
+		isEntering = true;
+	}
+
 	// MOVE
 	void MoveUpdate(){
 
@@ -195,25 +250,39 @@ public class MovingMecanic : MonoBehaviour {
 			while (i < 80) {
 				rayDirection = Quaternion.AngleAxis (i, transform.up) * transform.forward;
 
-				Debug.DrawRay(transform.position, rayDirection);
-
 				Ray theRay = new Ray (transform.position, rayDirection);
 				RaycastHit hit;
 
 				bool didHitSomething = Physics.Raycast(theRay, out hit, rayTraceSize, targetLayer);
 
-				if (didHitSomething && hit.transform != null && hit.transform.gameObject.tag == targetTag) {
-					targetPosition = hit.transform.position;
+				if (didHitSomething && hit.transform != null){
 
-					// -- Check How Far Away the Enemy
-					if (Vector3.Distance (hit.transform.position, transform.position) < damageableRange) {
-						hit.transform.parent.transform.GetComponent<HealthManager>().GetDamage (1.0f);
+					// -- Make sure hit object is inside the range
+					if(hit.transform.position.x > -rangeX && hit.transform.position.x < rangeX && hit.transform.position.z > -rangeZ && hit.transform.position.z < rangeZ){
+
+						// -- Make sure hit object has target tag
+						if (hit.transform.tag == targetTag || hit.transform.parent.transform.tag == targetTag) {
+
+							targetPosition = hit.transform.position;
+
+							// -- Check How Far Away the Enemy
+							if (Vector3.Distance (hit.transform.position, transform.position) < damageableRange) {
+
+								// -- Add damages but check if the target class exists in hit or hit's parent
+								if (hit.transform.GetComponent<HealthManager> () != null) {
+									hit.transform.GetComponent<HealthManager> ().GetDamage (1.0f);
+								} else {
+									hit.transform.parent.transform.GetComponent<HealthManager> ().GetDamage (1.0f);
+								}
+							}
+
+							return true;
+
+						}
 					}
-
-					return true;
 				} 
 
-				i += 20;
+				i += 30;
 			}
 
 			return false;
