@@ -3,8 +3,6 @@ using System.Collections;
 
 public class MovingMecanic : MonoBehaviour {
 
-	public CharacterController cc;
-
 	// Game Manager
 	GameManager GMgameManager;
 
@@ -14,32 +12,10 @@ public class MovingMecanic : MonoBehaviour {
 	// -- In Motion (Plant doesn't move until motion)
 	public bool inMotion = false;
 
-	// -- If the player is entering from outside.
-	public bool isEntering = false;
 
-
-	// Entering
-	Vector3 enteringTargetPos;
-
-	// MOVE
-	float movingSpeed;
-	public float minSpeed = 2.0f;
-	public float maxSpeed = 2.0f; // assign same value if to be consistent
-	// -- Moving Duration
-	float movingDuration;
-	public float minMovingDuration = 2.0f;
-	public float maxMovingDuration = 2.0f; // assign same value if to be consistent
-	bool moving = false;
-	// -- Moving Duration
-	float movingCounter;
-	public float minMovingCounter = 10.0f;
-	public float maxMovingCounter = 10.0f; // assign same value if to be consistent
-	// -- Rotation
-	float targetRotation;
-	float deltaRotation;
 
 	// -- Motion Range
-	float rangeX ,rangeZ;
+	public float rangeX ,rangeZ;
 
 
 
@@ -50,7 +26,7 @@ public class MovingMecanic : MonoBehaviour {
 	public string targetTag;
 
 	// -- Target Check
-	float rayTraceSize = 10.0f;
+	float rayTraceSize = 2.0f;
 
 	// -- boolean to check if the target is close enough
 	bool isDamageable = false;
@@ -58,6 +34,21 @@ public class MovingMecanic : MonoBehaviour {
 
 	// -- Layers
 	public LayerMask targetLayer;
+
+
+	// FLOCKING
+
+	public float flockingSpeed = 0.001f;
+	public float flockingAccelerator = 1.0f;
+	float flockingRotationSpeed = 1.0f;
+	public float flockingRotationAccelerator = 1.0f;
+	Vector3 flockingAverageHeading;
+	Vector3 flockingAveragePosition;
+	Vector3 flockingGoalPos = Vector3.zero;
+	// -- how close do they have to in order to be part of group
+	public float flockingNeighbourDistance = 2.0f;
+	// -- if it's outside of the boundary, the boolean becomes true
+	bool flockingTurning = false;
 
 
 	// Use this for initialization
@@ -69,9 +60,7 @@ public class MovingMecanic : MonoBehaviour {
 		// Area Range
 		rangeX = GMgameManager.rangeX;
 		rangeZ = GMgameManager.rangeZ;
-
-
-		StartCoroutine (MovingUpdate());
+			
 	}
 	
 	// Update is called once per frame
@@ -83,171 +72,58 @@ public class MovingMecanic : MonoBehaviour {
 		//transform.position.y = 0;
 
 
-		// ONBORDING
-		// -- moves until target area
-		if (isEntering) {
-			cc.Move (transform.forward * movingSpeed * Time.deltaTime);
-
-			if (transform.position.x > -rangeX * .8 && transform.position.x < rangeX * .8 && transform.position.z > -rangeZ * .8 && transform.position.z < rangeZ * .8) {
-				isEntering = false;
-				inMotion = true;
-			}
-		}
-
 		// MOVE
 		// Move only if it is in motion
 		if (inMotion) {
-			
-			// Random MOVE
-			if (!targetFound) {
-				// -- Move
-				if (moving) {
-					if (movingSpeed > 0) {
-						movingSpeed -= 0.05f;
-					}
-				}
-
-				// -- Counting
-				if (movingCounter > 0)
-					movingCounter--;
-				else if (moving) {
-					moving = false;
-					StartCoroutine (MovingUpdate ());
-				}
-
-				// Rotate
-				if (Mathf.Abs (targetRotation - transform.rotation.y) > 0.1f)
-					deltaRotation = targetRotation - transform.rotation.y;
-
-				transform.RotateAround (transform.position, Vector3.up, deltaRotation * 100.0f * Time.deltaTime);
-
-			} else {
-
-				// Move Toward
-				transform.LookAt (targetPosition);
-				cc.Move (transform.forward * movingSpeed * 0.9f * Time.deltaTime);
-			}
 
 
-			// MOVE
-			if (rangeX > transform.position.x && -1 * rangeX < transform.position.x && rangeZ > transform.position.z && -1 * rangeZ < transform.position.z) {
-				//Debug.Log ("In the range");
-				cc.Move (transform.forward * movingSpeed * Time.deltaTime);
-			} else if (
-				// Relieving from left
-				rangeX <= transform.position.x && transform.eulerAngles.y > 225 && transform.eulerAngles.y < 315 ||
-				// Relieving from right
-				-1 * rangeX >= transform.position.x && transform.eulerAngles.y > 45 && transform.eulerAngles.y < 135 ||
-				// Relieving from top
-				rangeZ <= transform.position.z && transform.eulerAngles.y > 135 && transform.eulerAngles.y < 225 ||
-				// Relieving from bottom Rotation 1
-				-1 * rangeZ >= transform.position.z && transform.eulerAngles.y < 45 ||
-				// Relieving from bottom Rotation 2
-				-1 * rangeZ >= transform.position.z && transform.eulerAngles.y > 315) {
-				//Debug.Log ("Recovering");
-				cc.Move (transform.forward * movingSpeed * Time.deltaTime);
-			} else {
-				//Debug.Log ("Failed");
-
-			}
-
-
-
-			// -- Check
+			// -- Check if enemy is around
 			if (isTargetable) {
 				targetFound = true;
-				if (isDamageable) {
-
-				}
 			} else {
 				targetFound = false;
+				flockingGoalPos = GMgameManager.goalPos;
 			}
 
+			// -- Check if it's outside of range
+			if (rangeX > transform.position.x && -1 * rangeX < transform.position.x && rangeZ > transform.position.z && -1 * rangeZ < transform.position.z)
+				flockingTurning = false;
+			else
+				flockingTurning = true;
+
+			// APPLY MOTION
+			if (flockingTurning) {
+
+				// -- If it's outside of range head toward 0 point
+				Vector3 dir = Vector3.zero - transform.position;
+				transform.rotation = Quaternion.Slerp (transform.rotation, Quaternion.LookRotation (dir), flockingRotationSpeed * flockingRotationAccelerator * Time.deltaTime);
+				flockingSpeed = Random.Range (0.5f, 1);
+			} else {
+
+				// --If it's inside apply flocking
+				if (Random.Range (0, 5) < 1 || targetFound)
+					ApplyFlocking ();
+			}
+
+			transform.Translate (0, 0, Time.deltaTime * flockingSpeed * flockingAccelerator);
+
 		}
 
+		if (flockingAccelerator > 1.0f)
+			flockingAccelerator -= 0.01f;
 
-			
+		if (flockingRotationAccelerator > 1.0f)
+			flockingRotationAccelerator -= 0.01f;
 	}
-
-	// Entering
-	public void Onboarding(){
-
-		// Random Positioning
-		int temp = Random.Range(0,4);
-		if (temp < 1) {
-			transform.position = new Vector3 (-2 * rangeX, 0, Random.Range(-rangeZ, rangeZ));
-		} else if (temp < 2) {
-			transform.position = new Vector3 (2 * rangeX, 0, Random.Range(-rangeZ, rangeZ));
-		} else if (temp < 3) {
-			transform.position = new Vector3 (Random.Range(-rangeX, rangeX), 0, -2 * rangeX);
-		} else {
-			transform.position = new Vector3 (Random.Range(-rangeX, rangeX), 0, 2 * rangeX);
-		}
-
-		// Entering
-		enteringTargetPos = new Vector3(Random.Range(-rangeX, rangeX), 0, Random.Range(-rangeZ, rangeZ));
-		transform.LookAt (enteringTargetPos);
-		isEntering = true;
-	}
-
-	// MOVE
-	void MoveUpdate(){
-
-		if (minSpeed == maxSpeed && minMovingDuration == maxMovingDuration){
-			movingSpeed = minSpeed;
-			movingDuration = minMovingDuration;
-			return;
-		}
-
-		// -- Assign moving speed
-		if (minSpeed != maxSpeed)
-			movingSpeed = Random.Range (minSpeed, maxSpeed);
-		else
-			movingSpeed = minSpeed;
-		// -- Assign moving duration
-		if (minMovingDuration != maxMovingDuration)
-			movingDuration = Random.Range (minMovingDuration, maxMovingDuration);
-		else
-			movingDuration = minMovingDuration;
-	}
-
-	void RotationUpdate(){
-		targetRotation = Random.Range(-2, 2);
-		//targetRotation = new Vector3 (Random.Range(-1, 1), Random.Range(-1, 1), Random.Range(-1, 1));
-	}
-
-	IEnumerator MovingUpdate(){
-
-		// -- Rotate Update
-		RotationUpdate ();
-
-		// -- Updates
-		if(!moving)
-			MoveUpdate();
-		// -- Wait
-		yield return new WaitForSeconds (2.0f);
-		// -- UpdateCounter
-		if (minMovingCounter != maxMovingCounter)
-			movingCounter = Random.Range (minMovingCounter, maxMovingCounter);
-		else
-			movingCounter = minMovingCounter;
-		moving = true;
-
-		// -- Rotate Update
-		RotationUpdate ();
-	}
-
-
-
 
 
 	// TARGET
 
 	bool isTargetable {
 		get{
-			int i = -80;
+			int i = -120;
 			Vector3 rayDirection;
-			while (i < 80) {
+			while (i < 120) {
 				rayDirection = Quaternion.AngleAxis (i, transform.up) * transform.forward;
 
 				Ray theRay = new Ray (transform.position, rayDirection);
@@ -270,10 +146,22 @@ public class MovingMecanic : MonoBehaviour {
 
 								// -- Add damages but check if the target class exists in hit or hit's parent
 								if (hit.transform.GetComponent<HealthManager> () != null) {
-									hit.transform.GetComponent<HealthManager> ().GetDamage (1.0f);
+									hit.transform.GetComponent<HealthManager> ().GetDamage (0.2f);
 								} else {
-									hit.transform.parent.transform.GetComponent<HealthManager> ().GetDamage (1.0f);
+									hit.transform.parent.transform.GetComponent<HealthManager> ().GetDamage (0.2f);
 								}
+
+								// -- What happens to attachiking pose if plant
+								if(transform.tag == "Plant"){
+									if(transform.GetComponent<Plant> ().lifeBranchAdditionalScaleAtAttack.y < 0.5f)
+										transform.GetComponent<Plant> ().lifeBranchAdditionalScaleAtAttack += new Vector3 (0, 0.1f, 0);
+								}
+
+								// -- Make the enemy to flocking target 
+								flockingGoalPos = hit.transform.position;
+
+								flockingAccelerator = 1.3f;
+								flockingRotationAccelerator = 4.0f;
 							}
 
 							return true;
@@ -282,10 +170,68 @@ public class MovingMecanic : MonoBehaviour {
 					}
 				} 
 
-				i += 30;
+				i += 20;
 			}
 
 			return false;
 		}
+	}
+
+
+
+	// FLOCKING
+	void ApplyFlocking (){
+
+		GameObject[] gos;
+		gos = GMgameManager.allPlants;
+
+		Vector3 vcenter = Vector3.zero;
+		Vector3 vavoid = Vector3.zero;
+		float gSpeed = 0.1f;
+
+		float dist;
+
+		int groupSize = 0;
+
+
+		foreach (GameObject go in gos) {
+
+			if (go != this.gameObject) {
+
+				dist = Vector3.Distance(go.transform.position, transform.position);
+
+				// -- If it's inside the neighbor distance
+				if (dist <= flockingNeighbourDistance) {
+					vcenter += go.transform.position;
+					groupSize++;
+
+					// -- If it's too close, avoid each other
+					if (dist < 1.0f) {
+						vavoid = vavoid + (transform.position - go.transform.position);
+					}
+
+					// -- Apply speed to the entire group
+					MovingMecanic anotherFlock = go.GetComponent<MovingMecanic> ();
+					gSpeed = gSpeed + anotherFlock.flockingSpeed;
+				}
+
+			}
+
+		}
+
+		// -- if plants are inside of group (close enough that fish are close)
+		if (groupSize > 0) {
+
+			vcenter = vcenter / groupSize + (flockingGoalPos - transform.position);
+			flockingSpeed = gSpeed / groupSize;
+
+			Vector3 dir = (vcenter + vavoid) - transform.position;
+
+			if (dir != Vector3.zero)
+				transform.rotation = Quaternion.Slerp (transform.rotation, Quaternion.LookRotation (dir), flockingRotationSpeed * Time.deltaTime);
+
+		}
+
+
 	}
 }

@@ -25,11 +25,11 @@ public class Plant : MonoBehaviour {
 
 	// -- growing sphere
 	float growingSpeed = 0.004f;
-	float dyingSpeed = 0.005f;
+	float dyingSpeed = 0.003f;
 	float deathAt = 0.002f;
 
 	// -- growing branch
-	float branchGrowingSpeed = 0.002f;
+	float branchGrowingSpeed = 0.05f;
 
 	public MovingMecanic ClassMM;
 
@@ -37,6 +37,9 @@ public class Plant : MonoBehaviour {
 	// -- Plant in Motion
 	public GameObject lifeBranch;
 	public GameObject lifeSphere;
+
+	public Vector3 lifeBranchLocalScale;
+	public Vector3 lifeBranchAdditionalScaleAtAttack = new Vector3 (0,0,0);
 
 
 	// Use this for initialization
@@ -89,10 +92,17 @@ public class Plant : MonoBehaviour {
 		if (!plantSeed && transform.GetComponent<HealthManager> ().active) {
 			if(lifeSphere.transform.localScale.x < 0.5f)
 				lifeSphere.transform.localScale += new Vector3(growingSpeed, growingSpeed, growingSpeed);
-			if(lifeBranch.transform.localScale.x < 0.5f)
-				lifeBranch.transform.localScale += new Vector3(branchGrowingSpeed, 0, 0);
+			if(lifeBranchLocalScale.x < 0.5f)
+				lifeBranchLocalScale += new Vector3(branchGrowingSpeed, 0, 0);
 		}
 
+		// -- When attach, change the form
+		if (!plantSeed) {
+			Debug.Log (lifeBranchLocalScale);
+			lifeBranch.transform.localScale = lifeBranchLocalScale/* + lifeBranchAdditionalScaleAtAttack*/;
+			if (lifeBranchAdditionalScaleAtAttack.y > 0)
+				lifeBranchAdditionalScaleAtAttack -= new Vector3 (0, 0.02f, 0);
+		}
 
 		if(!plantSeed && transform.GetComponent<HealthManager>().active && lifeSphere.transform.localScale.x >0.2f && spawneLimit == true){
 			spawneLimit = false;
@@ -184,6 +194,8 @@ public class Plant : MonoBehaviour {
 
 	void DeathManager (){
 		lifeSphere.transform.localScale -= new Vector3 (dyingSpeed, dyingSpeed, dyingSpeed);
+		lifeBranchLocalScale -= new Vector3 (dyingSpeed/2, 0, 0);
+
 		if (lifeSphere.transform.localScale.x * transform.localScale.x <= deathAt) {
 			// convert the parent to storage
 			transform.parent = GMgameManager.plantStorage.transform;
@@ -199,7 +211,7 @@ public class Plant : MonoBehaviour {
 		spawneLimit = true;
 		transform.localScale = new Vector3 (1, 1, 1);
 		lifeSphere.transform.localScale = new Vector3 (0.2f, 0.2f, 0.2f);
-		lifeBranch.transform.localScale = new Vector3 (0.05f, 2.0f, 1.0f);
+		lifeBranchLocalScale = new Vector3 (0.05f, 2.0f, 1.0f);
 		maxChild = 0;
 	}
 }

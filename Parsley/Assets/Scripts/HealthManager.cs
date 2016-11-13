@@ -40,7 +40,7 @@ public class HealthManager : MonoBehaviour {
 	// Receiving Damages
 	public void GetDamage(float Damage){
 
-		if (health > 0) {
+		if (health > 0.2f) {
 
 			currentHealth -= Damage;
 

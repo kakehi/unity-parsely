@@ -4,8 +4,8 @@ using System.Collections;
 public class GameManager : MonoBehaviour {
 
 	// -- Motion Range
-	public float rangeX = 10.0f;
-	public float rangeZ = 12.0f;
+	public float rangeX;
+	public float rangeZ;
 
 	// -- Plant Spawn
 	public GameObject plantStorage;
@@ -15,6 +15,10 @@ public class GameManager : MonoBehaviour {
 	// -- Alien Spawn
 	public GameObject[] allAliens;
 
+
+	// -- Flocking
+	public Vector3 goalPos = Vector3.zero;
+	int goalPositionIntervalWithMouse = 0;
 
 	// Use this for initialization
 	void Start () {
@@ -60,10 +64,26 @@ public class GameManager : MonoBehaviour {
 			}
 
 
+			// -- If it was pressed outside of seed, plants react to mouse.
+			if (!SeederWasPressed) {
+
+				// -- Update the Goal Pos to be Mouse
+				goalPos = Camera.main.ScreenToWorldPoint (new Vector3 (Input.mousePosition.x, Input.mousePosition.y, 15));
+				// -- Update Interval
+				goalPositionIntervalWithMouse = 500;
+				// -- Update Alliens Accelerator
+				for (int k = 0; k < plantSeeders.Length; k++) {
+					if (allPlants [k].GetComponent<HealthManager> ().active){
+						allPlants [k].GetComponent<MovingMecanic> ().flockingAccelerator = 2.5f;
+						allPlants [k].GetComponent<MovingMecanic> ().flockingRotationAccelerator = 2.5f;
+					}
+				}
+
+			}
+
 			// -- For ones moving, move away
-			i = 0;
+			/*i = 0;
 			while (i < allPlants.Length) {
-				Debug.Log (Vector3.Distance(allPlants [i].transform.position, Input.mousePosition));
 				if (
 					allPlants [i].GetComponent<HealthManager> ().active && 
 					allPlants [i].GetComponent<MovingMecanic> ().inMotion &&
@@ -73,9 +93,19 @@ public class GameManager : MonoBehaviour {
 					allPlants [i].transform.LookAt (2 * transform.position - Camera.main.ScreenToWorldPoint (new Vector3 (Input.mousePosition.x, Input.mousePosition.y, 15)));
 				}
 				i++;
-			}
+			}*/
 
 		}
+
+
+		// -- Randomize Goal Position for Flocking
+		if (Random.Range (0, 10000) < 50 && goalPositionIntervalWithMouse == 0) {
+			goalPos = new Vector3 (Random.Range (-rangeX, rangeX), 0, Random.Range (-rangeZ, rangeZ));
+		}
+
+		// -- Updating Mouse Position Interval
+		if (goalPositionIntervalWithMouse > 0)
+			goalPositionIntervalWithMouse--;
 	}
 
 
@@ -91,7 +121,7 @@ public class GameManager : MonoBehaviour {
 				// -- if alien is not currently active, activate them
 				if (!allAliens [i].GetComponent<HealthManager> ().active) {
 					allAliens [i].GetComponent<HealthManager> ().active = true;
-					allAliens [i].GetComponent<MovingMecanic> ().Onboarding ();
+					allAliens [i].GetComponent<Entering> ().Onboarding ();
 				}
 
 				// -- check if alien's number reached all spare aliens

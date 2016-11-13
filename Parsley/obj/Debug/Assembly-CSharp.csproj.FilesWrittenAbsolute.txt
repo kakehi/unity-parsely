@@ -1,0 +1,14 @@
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/UnityEngine.dll
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/UnityEditor.dll
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/UnityEngine.Networking.dll
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/UnityEngine.UI.dll
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/UnityEngine.Analytics.dll
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/Mono.Cecil.dll
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/Unity.SerializationLogic.dll
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/Unity.DataContract.dll
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/ICSharpCode.NRefactory.dll
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/Unity.UNetWeaver.dll
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/Unity.UNetWeaver.dll.mdb
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/Unity.CecilTools.dll
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/Mono.Cecil.Pdb.dll
+/Users/tkakehi/Desktop/TAKUMA/APP PROJECTS/w076_Parsley/Parsley/Temp/bin/Debug/Mono.Cecil.Mdb.dll
