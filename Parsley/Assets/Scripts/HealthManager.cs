@@ -9,7 +9,7 @@ public class HealthManager : MonoBehaviour {
 
 	// -- health counter
 	public float health;
-	float currentHealth;
+	public float currentHealth;
 
 	// -- If the target can recover by itself
 	public bool recoverable = false;
@@ -35,20 +35,20 @@ public class HealthManager : MonoBehaviour {
 			currentHealth += 1.0f;
 			UpdateScale ();
 		}
+
+		if(!recoverable)
+			UpdateScale ();
 	}
 
 	// Receiving Damages
 	public void GetDamage(float Damage){
 
-		if (health > 0.2f) {
+		currentHealth -= Damage;
 
-			currentHealth -= Damage;
-
-			UpdateScale ();
-
-		} else {
+		if (currentHealth < .5f)
 			Die ();
-		}
+		else
+			UpdateScale ();
 	}
 
 
@@ -56,6 +56,10 @@ public class HealthManager : MonoBehaviour {
 	public void Die(){
 		active = false;
 		transform.position = new Vector3 (-2 * GMgameManager.rangeX, 0, 0);
+
+		// If the gameobject has motion class, turn off
+		if (transform.GetComponent<MovingMecanic> () != null)
+			transform.GetComponent<MovingMecanic> ().inMotion = false;
 	}
 
 
@@ -63,9 +67,19 @@ public class HealthManager : MonoBehaviour {
 		
 		// Change Scale State
 		if(transform.tag == "Alien")
-			transform.localScale = new Vector3(currentHealth / 100 + 0.2f, currentHealth / 100 + 0.2f, currentHealth / 100 + 0.2f);
+			transform.localScale = new Vector3(currentHealth / 50, currentHealth / 50, currentHealth / 50);
 
 		if(transform.tag == "Player")
 			transform.localScale = new Vector3(currentHealth / 1000 + 0.2f, currentHealth / 1000 + 0.2f, currentHealth / 1000 + 0.2f);
+
+		if (transform.tag == "PlantSeed") {
+			transform.GetComponent<PlantSeedUnit> ().seeder.transform.localScale = new Vector3 (currentHealth/2.0f + 0.2f, currentHealth/2.0f + 0.2f, currentHealth/2.0f + 0.2f);
+		}
+
+		if (transform.tag == "Plant") {
+			transform.GetComponent<PlantDefenseUnit> ().lifeSphereLocalScale = new Vector3 (currentHealth/2.0f, currentHealth/2.0f, currentHealth/2.0f);
+			transform.GetComponent<PlantDefenseUnit> ().lifeBranchLocalScale = new Vector3 (currentHealth/2.0f, 2.0f, 1.0f);
+		}
+
 	}
 }

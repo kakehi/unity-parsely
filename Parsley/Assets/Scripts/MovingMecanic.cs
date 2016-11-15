@@ -22,8 +22,10 @@ public class MovingMecanic : MonoBehaviour {
 	// TARGET
 	public Vector3 targetPosition;
 
+	public float damageAttack;
+
 	// -- Target Tag
-	public string targetTag;
+	public string[] targetTags;
 
 	// -- Target Check
 	float rayTraceSize = 2.0f;
@@ -60,7 +62,13 @@ public class MovingMecanic : MonoBehaviour {
 		// Area Range
 		rangeX = GMgameManager.rangeX;
 		rangeZ = GMgameManager.rangeZ;
-			
+
+
+		if(transform.tag == "Plant"){
+			damageAttack = 0.4f;
+		}else if(transform.tag == "Alien"){
+			damageAttack = 0.005f;
+		}
 	}
 	
 	// Update is called once per frame
@@ -117,69 +125,8 @@ public class MovingMecanic : MonoBehaviour {
 	}
 
 
-	// TARGET
-
-	bool isTargetable {
-		get{
-			int i = -120;
-			Vector3 rayDirection;
-			while (i < 120) {
-				rayDirection = Quaternion.AngleAxis (i, transform.up) * transform.forward;
-
-				Ray theRay = new Ray (transform.position, rayDirection);
-				RaycastHit hit;
-
-				bool didHitSomething = Physics.Raycast(theRay, out hit, rayTraceSize, targetLayer);
-
-				if (didHitSomething && hit.transform != null){
-
-					// -- Make sure hit object is inside the range
-					if(hit.transform.position.x > -rangeX && hit.transform.position.x < rangeX && hit.transform.position.z > -rangeZ && hit.transform.position.z < rangeZ){
-
-						// -- Make sure hit object has target tag
-						if (hit.transform.tag == targetTag || hit.transform.parent.transform.tag == targetTag) {
-
-							targetPosition = hit.transform.position;
-
-							// -- Check How Far Away the Enemy
-							if (Vector3.Distance (hit.transform.position, transform.position) < damageableRange) {
-
-								// -- Add damages but check if the target class exists in hit or hit's parent
-								if (hit.transform.GetComponent<HealthManager> () != null) {
-									hit.transform.GetComponent<HealthManager> ().GetDamage (0.2f);
-								} else {
-									hit.transform.parent.transform.GetComponent<HealthManager> ().GetDamage (0.2f);
-								}
-
-								// -- What happens to attachiking pose if plant
-								if(transform.tag == "Plant"){
-									if(transform.GetComponent<Plant> ().lifeBranchAdditionalScaleAtAttack.y < 0.5f)
-										transform.GetComponent<Plant> ().lifeBranchAdditionalScaleAtAttack += new Vector3 (0, 0.1f, 0);
-								}
-
-								// -- Make the enemy to flocking target 
-								flockingGoalPos = hit.transform.position;
-
-								flockingAccelerator = 1.3f;
-								flockingRotationAccelerator = 4.0f;
-							}
-
-							return true;
-
-						}
-					}
-				} 
-
-				i += 20;
-			}
-
-			return false;
-		}
-	}
-
-
-
 	// FLOCKING
+
 	void ApplyFlocking (){
 
 		GameObject[] gos;
@@ -234,4 +181,93 @@ public class MovingMecanic : MonoBehaviour {
 
 
 	}
+
+
+	// TARGET
+
+	bool isTargetable {
+		get{
+			int i = -120;
+			Vector3 rayDirection;
+			while (i < 120) {
+				rayDirection = Quaternion.AngleAxis (i, transform.up) * transform.forward;
+
+				Ray theRay = new Ray (transform.position, rayDirection);
+				RaycastHit hit;
+
+				bool didHitSomething = Physics.Raycast(theRay, out hit, rayTraceSize, targetLayer);
+
+				if (didHitSomething && hit.transform != null){
+					
+					// -- Make sure hit object is inside the range
+					if(hit.transform.position.x > -rangeX && hit.transform.position.x < rangeX && hit.transform.position.z > -rangeZ && hit.transform.position.z < rangeZ){
+
+						// -- Make sure hit object has target tag
+						for (int j = 0; j < targetTags.Length; j++) {
+							if (hit.transform.tag == targetTags [j] || hit.transform.parent.transform.tag == targetTags [j]) {
+								
+								targetPosition = hit.transform.position;
+
+								// -- What happens to attachiking pose if plant when attacking Alien
+								if (transform.tag == "Plant" && targetTags [j] == "Alien") {
+									if (transform.GetComponent<PlantDefenseUnit> ().lifeBranchAdditionalScaleAtAttack.x < 1.0f)
+										transform.GetComponent<PlantDefenseUnit> ().lifeBranchAdditionalScaleAtAttack += new Vector3 (0.35f, 0, 0);
+								}
+
+								// -- Make the enemy to flocking target 
+								flockingGoalPos = hit.transform.position;
+
+								flockingAccelerator = 3.5f;
+								flockingRotationAccelerator = 4.0f;
+
+								// -- Check How Far Away the Enemy
+								if (Vector3.Distance (hit.transform.position, transform.position) < damageableRange) {
+
+									ApplyDamage (hit);
+
+								}
+
+								return true;
+
+							}
+						}
+					}
+				} 
+
+				i += 20;
+			}
+
+			return false;
+		}
+	}
+
+
+	// Applying Damage
+
+	void ApplyDamage(RaycastHit hit){
+
+
+		// -- Add damages but check if the target class exists in hit or hit's parent
+
+		if (hit.transform.GetComponent<HealthManager> () != null) {
+			hit.transform.GetComponent<HealthManager> ().GetDamage (damageAttack);
+		} else if(hit.transform.parent.transform.GetComponent<HealthManager> () != null){
+			hit.transform.parent.transform.GetComponent<HealthManager> ().GetDamage (damageAttack);
+		}
+
+
+		// -- If Plant Defence Unit, Increase Own Health
+
+		if (transform.GetComponent<PlantDefenseUnit> () != null) {
+			transform.GetComponent<HealthManager> ().currentHealth += 0.001f;
+		}
+
+		// -- If Heart
+
+		if (hit.transform.tag == "Heart")
+			hit.transform.GetComponent<Heart>().currentHeartScale += hit.transform.GetComponent<Heart>().heartGrowthScale;
+		
+
+	}
+
 }

@@ -10,12 +10,13 @@ public class Plant : MonoBehaviour {
 	public bool plantSeed = false;
 	GameObject plantSeedGameObject;
 
+	public GameObject myParentSeed;
+
 	public bool spawneLimit = true;
 
 	public float maxChild;
 
 	public GameObject childPrefab;
-	GameObject activeChildPrefab;
 
 	// -- Growth Parameter
 	// -- branch length
@@ -23,23 +24,10 @@ public class Plant : MonoBehaviour {
 	public float branchMinAnfgle;
 	public float branchMaxAnfgle;
 
-	// -- growing sphere
-	float growingSpeed = 0.004f;
-	float dyingSpeed = 0.003f;
-	float deathAt = 0.002f;
 
-	// -- growing branch
-	float branchGrowingSpeed = 0.05f;
 
 	public MovingMecanic ClassMM;
 
-
-	// -- Plant in Motion
-	public GameObject lifeBranch;
-	public GameObject lifeSphere;
-
-	public Vector3 lifeBranchLocalScale;
-	public Vector3 lifeBranchAdditionalScaleAtAttack = new Vector3 (0,0,0);
 
 
 	// Use this for initialization
@@ -48,11 +36,7 @@ public class Plant : MonoBehaviour {
 		// Grabbing Game Manager CS class
 		GMgameManager = GameObject.FindGameObjectWithTag ("GameManager").transform.GetComponent<GameManager>();
 
-		// -- if it is not seed, grab seed.
-		if (!plantSeed)
-			plantSeedGameObject = GameObject.FindGameObjectWithTag ("PlantSeed");
-
-		// -- Spawn Managers
+		// -- Spawn Manage
 		// -- if spawnseed turn limit off
 		if(plantSeed){
 			spawneLimit = false;
@@ -76,9 +60,7 @@ public class Plant : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
-	
-
-		if (spawneLimit == false && maxChild > 0 && Random.Range(0,10) > 8) {
+		if (spawneLimit == false && maxChild > 0 && Random.Range(0,10) > 8 && transform.GetComponent<HealthManager>().active) {
 			SpawnNext ();
 		}
 
@@ -87,26 +69,7 @@ public class Plant : MonoBehaviour {
 		if (ClassMM!= null && ClassMM.inMotion) {
 			DeathManager ();
 		}
-
-		// -- Grow If you are not plantSeed
-		if (!plantSeed && transform.GetComponent<HealthManager> ().active) {
-			if(lifeSphere.transform.localScale.x < 0.5f)
-				lifeSphere.transform.localScale += new Vector3(growingSpeed, growingSpeed, growingSpeed);
-			if(lifeBranchLocalScale.x < 0.5f)
-				lifeBranchLocalScale += new Vector3(branchGrowingSpeed, 0, 0);
-		}
-
-		// -- When attach, change the form
-		if (!plantSeed) {
-			Debug.Log (lifeBranchLocalScale);
-			lifeBranch.transform.localScale = lifeBranchLocalScale/* + lifeBranchAdditionalScaleAtAttack*/;
-			if (lifeBranchAdditionalScaleAtAttack.y > 0)
-				lifeBranchAdditionalScaleAtAttack -= new Vector3 (0, 0.02f, 0);
-		}
-
-		if(!plantSeed && transform.GetComponent<HealthManager>().active && lifeSphere.transform.localScale.x >0.2f && spawneLimit == true){
-			spawneLimit = false;
-		}
+			
 	}
 
 	void SpawnNext(){
@@ -129,7 +92,7 @@ public class Plant : MonoBehaviour {
 		int i=0;
 		while(i < GMgameManager.allPlants.Length){
 			if (!GMgameManager.allPlants [i].GetComponent<HealthManager> ().active) {
-				Spawned (i, newPos);
+				Spawned (GMgameManager.allPlants [i], newPos);
 				i = GMgameManager.allPlants.Length;
 			}
 			i++;
@@ -137,23 +100,28 @@ public class Plant : MonoBehaviour {
 
 	}
 
-	void Spawned(int i, Vector3 newPos){
+	void Spawned(GameObject activeChild, Vector3 newPos){
 
-		activeChildPrefab = GMgameManager.allPlants [i];
+		activeChild.transform.position = newPos + transform.position;
+		activeChild.transform.localScale = transform.localScale * 0.8f;
+		activeChild.transform.LookAt (transform.position);
 
-		activeChildPrefab.transform.position = newPos + transform.position;
-		activeChildPrefab.transform.localScale = transform.localScale * 0.8f;
-		activeChildPrefab.transform.LookAt (transform.position);
-
-		activeChildPrefab.GetComponent<HealthManager> ().active = true;
+		activeChild.GetComponent<HealthManager> ().active = true;
 
 		// -- Make child parent same as my parent
-		activeChildPrefab.GetComponent<HealthManager> ().transform.parent = transform.parent;
+		if(plantSeed){
+			activeChild.GetComponent<Plant> ().myParentSeed = transform.gameObject;
+		}else{
+			activeChild.GetComponent<Plant> ().myParentSeed = myParentSeed;
+		}
 
 		// -- ActiveChildLimit
-		activeChildPrefab.GetComponent<Plant>().maxChild = (maxChild- Mathf.Abs(Random.Range(0,1)));
+		activeChild.GetComponent<Plant>().maxChild = (maxChild- Mathf.Abs(Random.Range(0,1)));
+
 		// -- Randomize Sphere Size
-		activeChildPrefab.GetComponent<Plant>().lifeSphere.transform.localScale = new Vector3(0, 0, 0);
+		if(!activeChild.GetComponent<Plant>().plantSeed)
+			activeChild.GetComponent<PlantDefenseUnit>().lifeSphere.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+
 
 		// -- Adjust because spawned
 		if (maxChild > 0) {
@@ -193,25 +161,15 @@ public class Plant : MonoBehaviour {
 
 
 	void DeathManager (){
-		lifeSphere.transform.localScale -= new Vector3 (dyingSpeed, dyingSpeed, dyingSpeed);
-		lifeBranchLocalScale -= new Vector3 (dyingSpeed/2, 0, 0);
 
-		if (lifeSphere.transform.localScale.x * transform.localScale.x <= deathAt) {
-			// convert the parent to storage
-			transform.parent = GMgameManager.plantStorage.transform;
-
-			MakeDefault ();
-			transform.GetComponent<HealthManager> ().Die ();
-		}
-
+		if (!plantSeed)
+			transform.GetComponent<PlantDefenseUnit> ().DeathManager ();
 	}
 
 	void MakeDefault(){
 		ClassMM.inMotion = false;
 		spawneLimit = true;
 		transform.localScale = new Vector3 (1, 1, 1);
-		lifeSphere.transform.localScale = new Vector3 (0.2f, 0.2f, 0.2f);
-		lifeBranchLocalScale = new Vector3 (0.05f, 2.0f, 1.0f);
-		maxChild = 0;
+		//maxChild = 0;
 	}
 }

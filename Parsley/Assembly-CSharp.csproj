@@ -49,9 +49,11 @@
      <Compile Include="Assets\Scripts\Entering.cs" />
      <Compile Include="Assets\Scripts\GameManager.cs" />
      <Compile Include="Assets\Scripts\HealthManager.cs" />
+     <Compile Include="Assets\Scripts\Heart.cs" />
      <Compile Include="Assets\Scripts\MovingMecanic.cs" />
      <Compile Include="Assets\Scripts\Plant.cs" />
      <Compile Include="Assets\Scripts\PlantDefenseUnit.cs" />
+     <Compile Include="Assets\Scripts\PlantSeedUnit.cs" />
      <Compile Include="Assets\Scripts\Player.cs" />
  <Reference Include="UnityEngine.Networking">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/Networking/UnityEngine.Networking.dll</HintPath>

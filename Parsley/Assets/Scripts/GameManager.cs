@@ -8,13 +8,17 @@ public class GameManager : MonoBehaviour {
 	public float rangeZ;
 
 	// -- Plant Spawn
+	public GameObject activePlant;
 	public GameObject plantStorage;
+	public GameObject plantSeedStorage;
 	public GameObject[] plantSeeders;
 	public GameObject[] allPlants;
 
 	// -- Alien Spawn
 	public GameObject[] allAliens;
 
+	// -- Heart
+	public GameObject[] allHearts;
 
 	// -- Flocking
 	public Vector3 goalPos = Vector3.zero;
@@ -22,15 +26,35 @@ public class GameManager : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		plantStorage = GameObject.FindGameObjectWithTag ("PlantStorage");
-		plantSeeders = GameObject.FindGameObjectsWithTag ("PlantSeed");
 
+		// CREATING GAME OBJECTS BY TAGS
+		// -- Where active plants stay
+		activePlant = GameObject.FindGameObjectWithTag ("ActivePlant");
+		// -- Srorage
+		plantStorage = GameObject.FindGameObjectWithTag ("PlantStorage");
+		plantSeedStorage = GameObject.FindGameObjectWithTag ("PlantSeedStorage");
+		// -- All Plant Seeders List
+		plantSeeders = GameObject.FindGameObjectsWithTag ("PlantSeed");
+		// -- All Plants List
 		allPlants = GameObject.FindGameObjectsWithTag ("Plant");
 
 		allAliens = GameObject.FindGameObjectsWithTag ("Alien");
 
+		allHearts = GameObject.FindGameObjectsWithTag ("Heart");
+
+		// -- Start Spawn Plant Seeder
+		for(int i=0; i<2; i++){
+			SpawnSeeder(new Vector3 (Random.Range (-rangeX, rangeX) * 0.8f, 0, Random.Range (-rangeZ, rangeZ) * 0.8f));
+		}
+
+
 		// -- Start Spawning Aliens
 		StartCoroutine(SpawnAlien(5));
+
+
+		// -- Start Spawning Heart
+		StartCoroutine(SpawnHeart());
+
 
 	}
 
@@ -53,7 +77,7 @@ public class GameManager : MonoBehaviour {
 					int j = 0;
 					while (j < allPlants.Length) {
 						// -- check if plants are active and if plant seeder is target
-						if (allPlants [j].GetComponent<HealthManager> ().active && allPlants [j].transform.parent.transform == plantSeeders [i].transform.parent.transform)
+						if (allPlants [j].GetComponent<HealthManager> ().active && allPlants [j].GetComponent<Plant>().myParentSeed == plantSeeders [i])
 							allPlants [j].GetComponent<Plant> ().dispatchPlant ();
 						j++;
 					}
@@ -109,12 +133,35 @@ public class GameManager : MonoBehaviour {
 	}
 
 
-	// Spawn Alien
+	// SPAWN SEEDER
+
+	public void SpawnSeeder(Vector3 pos){
+
+		int i = 0;
+		while (i<plantSeeders.Length) {
+			// -- if alien is not currently active, activate them
+			if (!plantSeeders [i].GetComponent<HealthManager> ().active) {
+				plantSeeders [i].GetComponent<HealthManager> ().active = true;
+				plantSeeders [i].transform.position = pos;
+				plantSeeders [i].transform.parent = activePlant.transform;
+				i = plantSeeders.Length;
+			}
+
+			i++;
+		}
+
+	}
+
+
+
+	// SPAWN ALIEN
 
 	IEnumerator SpawnAlien(int spawnCounter){
 
 		while (true) {
-			
+
+			yield return new WaitForSeconds (8);
+
 			int i = 0;
 			while (i < spawnCounter) {
 
@@ -132,7 +179,6 @@ public class GameManager : MonoBehaviour {
 				}
 			}
 
-			yield return new WaitForSeconds (8);
 
 			if (spawnCounter < allAliens.Length)
 				spawnCounter += Random.Range(-5,10);
@@ -140,6 +186,30 @@ public class GameManager : MonoBehaviour {
 
 	}
 		
-		
+
+
+	// SPAWN ALIEN
+
+	IEnumerator SpawnHeart(){
+
+		while (true) {
+
+
+
+			int i = 0;
+			while (i < allHearts.Length) {
+
+				// -- if heart is not currently active, activate them
+				if (!allHearts [i].GetComponent<Heart> ().active) {
+					allHearts [i].GetComponent<Heart> ().Onboarding ();
+					i = allHearts.Length;
+				} else {
+					i++;
+				}
+			}
+
+			yield return new WaitForSeconds (15);
+		}
+	}
 
 }
