@@ -12,8 +12,8 @@ public class PlantDefenseUnit : MonoBehaviour {
 
 
 	// -- growing sphere
-	float growingSpeed = 0.004f;
-	float dyingSpeed = 0.0001f;
+	float growingSpeed = 0.01f;
+	float dyingSpeed = 0.005f;
 	float deathAt = 0.01f;
 
 
@@ -47,19 +47,21 @@ public class PlantDefenseUnit : MonoBehaviour {
 
 			// -- If it is NOT in motion yet (part of plant), keep growing, otherwise reaching to dye
 			if (!transform.GetComponent<MovingMecanic> ().inMotion) {
-				if (transform.GetComponent<HealthManager> ().currentHealth < 100) {
+
+				if (transform.GetComponent<HealthManager> ().currentHealth < 1.5f) {
 					transform.GetComponent<HealthManager> ().currentHealth += growingSpeed;
 				}
 			} else {
 				transform.GetComponent<HealthManager> ().currentHealth -= dyingSpeed;
 			}
-			/*if(lifeSphere.transform.localScale.x < 0.5f)
+
+			/*if(lifeSphere.transform.localScale.x < 3.5f)
 				transform.GetComponent<HealthManager> ().health += growingSpeed;
-			if(lifeBranchLocalScale.x < 0.2f)
+			if(lifeBranchLocalScale.x < 0.5f)
 				lifeBranchLocalScale += new Vector3(branchGrowingSpeed, 0, 0);*/
 		}
 
-		// -- When attach, change the form
+		// -- When detect, change the form
 		lifeBranch.transform.localScale = lifeBranchLocalScale + lifeBranchAdditionalScaleAtAttack;
 		if (lifeBranchAdditionalScaleAtAttack.x > 0){
 			lifeBranchAdditionalScaleAtAttack -= new Vector3 (0.02f, 0, 0);
@@ -84,6 +86,7 @@ public class PlantDefenseUnit : MonoBehaviour {
 
 			MakeDefault ();
 			transform.GetComponent<HealthManager> ().Die ();
+			transform.GetComponent<HealthManager> ().MakeDefault ();
 		}
 
 	}
@@ -91,8 +94,8 @@ public class PlantDefenseUnit : MonoBehaviour {
 
 
 	public void MakeDefault(){
-		lifeSphereLocalScale = new Vector3 (0.2f, 0.2f, 0.2f);
-		lifeBranchLocalScale = new Vector3 (0.01f, 2.0f, 1.0f);
+		lifeSphereLocalScale = new Vector3 (0.1f, 0.1f, 0.1f);
+		lifeBranchLocalScale = new Vector3 (0.25f, 2.0f, 1.0f);
 	}
 
 

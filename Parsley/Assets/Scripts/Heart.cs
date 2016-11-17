@@ -28,13 +28,13 @@ public class Heart : MonoBehaviour {
 
 	void Update(){
 
-		Debug.Log ("Scale: " + transform.localScale + ", Alpha: " + graphicSprite.GetComponent<SpriteRenderer> ().material.color.a);
 		// -- Update the scale of heart
 		transform.localScale = new Vector3 (currentHeartScale, currentHeartScale, currentHeartScale);
-		graphicSprite.GetComponent<SpriteRenderer> ().material.color = new Color (1f, 1f, 1f, 1.0f - currentHeartScale/2);
+		graphicSprite.GetComponent<SpriteRenderer> ().material.color = new Color (1f, 1f, 1f, 1.0f - currentHeartScale/3.0f);
 
 
-		if(1.0f - currentHeartScale/2 < 0.05f){
+		if(1.0f - currentHeartScale/3.0f < 0.05f){
+			GMgameManager.SpawnSeeder (transform.position);
 			MakeDefault();
 		}
 			
@@ -56,7 +56,6 @@ public class Heart : MonoBehaviour {
 
 
 	void MakeDefault(){
-		GMgameManager.SpawnSeeder (transform.position);
 		active = false;
 		currentHeartScale = heartScale;
 		transform.position = new Vector3(GMgameManager.rangeX * 2, 0, GMgameManager.rangeZ);

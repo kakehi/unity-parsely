@@ -73,6 +73,7 @@ public class Plant : MonoBehaviour {
 	}
 
 	void SpawnNext(){
+
 		// -- Create New Position
 		// -- Random on circle
 		//Vector3 newPos = Random.onUnitSphere * branchDistance;
@@ -137,7 +138,7 @@ public class Plant : MonoBehaviour {
 
 		// -- make the max child count to default so it will spawn again
 		if (plantSeed == true) {
-			maxChild = 5;
+			maxChild = 2;
 			spawneLimit = false;
 		} else {
 			if(transform.GetComponent<HealthManager>().active == true){

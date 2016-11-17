@@ -100,15 +100,15 @@ public class Entering : MonoBehaviour {
 	public void Onboarding(){
 
 		// Random Positioning
-		int temp = Random.Range(0,4);
+		int temp = Random.Range(0,2);
 		if (temp < 1) {
-			transform.position = new Vector3 (-2 * MM.rangeX, 0, Random.Range(-MM.rangeZ, MM.rangeZ));
+			transform.position = new Vector3 (-1.2f * MM.rangeX, 0, Random.Range(-MM.rangeZ, MM.rangeZ) * 0.4f);
 		} else if (temp < 2) {
-			transform.position = new Vector3 (2 * MM.rangeX, 0, Random.Range(-MM.rangeZ, MM.rangeZ));
+			transform.position = new Vector3 (1.2f * MM.rangeX, 0, Random.Range(-MM.rangeZ, MM.rangeZ) * 0.4f);
 		} else if (temp < 3) {
-			transform.position = new Vector3 (Random.Range(-MM.rangeX, MM.rangeX), 0, -2 * MM.rangeX);
+			transform.position = new Vector3 (Random.Range(-MM.rangeX, MM.rangeX), 0, -1.2f * MM.rangeZ);
 		} else {
-			transform.position = new Vector3 (Random.Range(-MM.rangeX, MM.rangeX), 0, 2 * MM.rangeX);
+			transform.position = new Vector3 (Random.Range(-MM.rangeX, MM.rangeX), 0, 1.2f * MM.rangeZ);
 		}
 
 		// Entering

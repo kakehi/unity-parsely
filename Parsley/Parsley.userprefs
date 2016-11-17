@@ -2,12 +2,15 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Plant.cs">
     <Files>
+      <File FileName="Assets/Scripts/Plant.cs" Line="63" Column="119" />
       <File FileName="Assets/Scripts/Alien.cs" Line="18" Column="3" />
-      <File FileName="Assets/Scripts/Plant.cs" Line="106" Column="24" />
       <File FileName="Assets/Scripts/Player.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/GameManager.cs" Line="70" Column="82" />
-      <File FileName="Assets/Scripts/MovingMecanic.cs" Line="127" Column="21" />
-      <File FileName="Assets/Scripts/HealthManager.cs" Line="34" Column="25" />
+      <File FileName="Assets/Scripts/GameManager.cs" Line="138" Column="9" />
+      <File FileName="Assets/Scripts/MovingMecanic.cs" Line="63" Column="12" />
+      <File FileName="Assets/Scripts/HealthManager.cs" Line="48" Column="3" />
+      <File FileName="Assets/Scripts/Heart.cs" Line="39" Column="4" />
+      <File FileName="Assets/Scripts/PlantDefenseUnit.cs" Line="17" Column="22" />
+      <File FileName="Assets/Scripts/PlantSeedUnit.cs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

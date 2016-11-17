@@ -28,7 +28,7 @@ public class MovingMecanic : MonoBehaviour {
 	public string[] targetTags;
 
 	// -- Target Check
-	float rayTraceSize = 2.0f;
+	float rayTraceSize = 4.0f;
 
 	// -- boolean to check if the target is close enough
 	bool isDamageable = false;
@@ -108,9 +108,15 @@ public class MovingMecanic : MonoBehaviour {
 				flockingSpeed = Random.Range (0.5f, 1);
 			} else {
 
-				// --If it's inside apply flocking
-				if (Random.Range (0, 5) < 1 || targetFound)
-					ApplyFlocking ();
+				if (GMgameManager.GetComponent<GameManager> ().goalPositionIntervalWithMouse == 0) {
+					// --If it's inside apply flocking
+					if (Random.Range (0, 5) < 1 || targetFound)
+						ApplyFlocking ();
+				} else {
+					Vector3 dir = GMgameManager.GetComponent<GameManager> ().currentMousePosition - transform.position;
+					transform.rotation = Quaternion.Slerp (transform.rotation, Quaternion.LookRotation (dir), 5.0f * Time.deltaTime);
+				}
+				
 			}
 
 			transform.Translate (0, 0, Time.deltaTime * flockingSpeed * flockingAccelerator);
@@ -194,47 +200,59 @@ public class MovingMecanic : MonoBehaviour {
 
 				Ray theRay = new Ray (transform.position, rayDirection);
 				RaycastHit hit;
-
+				
 				bool didHitSomething = Physics.Raycast(theRay, out hit, rayTraceSize, targetLayer);
+
+				if (transform.tag != null && transform.tag == "Alien") {
+					Debug.DrawRay (transform.position, rayDirection);
+					Debug.Log (hit.transform);
+				}
 
 				if (didHitSomething && hit.transform != null){
 					
 					// -- Make sure hit object is inside the range
 					if(hit.transform.position.x > -rangeX && hit.transform.position.x < rangeX && hit.transform.position.z > -rangeZ && hit.transform.position.z < rangeZ){
 
-						// -- Make sure hit object has target tag
-						for (int j = 0; j < targetTags.Length; j++) {
-							if (hit.transform.tag == targetTags [j] || hit.transform.parent.transform.tag == targetTags [j]) {
-								
-								targetPosition = hit.transform.position;
+						// -- Check if the hit target is NOT alive
 
-								// -- What happens to attachiking pose if plant when attacking Alien
-								if (transform.tag == "Plant" && targetTags [j] == "Alien") {
-									if (transform.GetComponent<PlantDefenseUnit> ().lifeBranchAdditionalScaleAtAttack.x < 1.0f)
-										transform.GetComponent<PlantDefenseUnit> ().lifeBranchAdditionalScaleAtAttack += new Vector3 (0.35f, 0, 0);
+						if(hit.transform.GetComponent<HealthManager>() != null && !hit.transform.GetComponent<HealthManager>().justDied || hit.transform.tag == "Heart")
+
+						
+							// -- Make sure hit object has target tag
+							for (int j = 0; j < targetTags.Length; j++) {
+
+								if (hit.transform.tag == targetTags [j] || hit.transform.parent.transform.tag == targetTags [j]) {
+									
+									targetPosition = hit.transform.position;
+
+									// -- What happens to attachiking pose if plant when attacking Alien
+									if (transform.tag == "Plant" && targetTags [j] == "Alien") {
+										if (transform.GetComponent<PlantDefenseUnit> ().lifeBranchAdditionalScaleAtAttack.x < 1.0f)
+											transform.GetComponent<PlantDefenseUnit> ().lifeBranchAdditionalScaleAtAttack += new Vector3 (0.35f, 0, 0);
+									}
+
+									// -- Make the enemy to flocking target 
+									flockingGoalPos = hit.transform.position;
+
+									flockingAccelerator = 2.0f;
+									flockingRotationAccelerator = 50.0f;
+
+									// -- Check How Far Away the Enemy
+									if (Vector3.Distance (hit.transform.position, transform.position) < damageableRange) {
+
+										ApplyDamage (hit);
+
+									}
+
+									return true;
+
 								}
 
-								// -- Make the enemy to flocking target 
-								flockingGoalPos = hit.transform.position;
-
-								flockingAccelerator = 3.5f;
-								flockingRotationAccelerator = 4.0f;
-
-								// -- Check How Far Away the Enemy
-								if (Vector3.Distance (hit.transform.position, transform.position) < damageableRange) {
-
-									ApplyDamage (hit);
-
-								}
-
-								return true;
-
-							}
 						}
 					}
 				} 
 
-				i += 20;
+				i += 30;
 			}
 
 			return false;
@@ -245,6 +263,7 @@ public class MovingMecanic : MonoBehaviour {
 	// Applying Damage
 
 	void ApplyDamage(RaycastHit hit){
+
 
 
 		// -- Add damages but check if the target class exists in hit or hit's parent
@@ -259,7 +278,7 @@ public class MovingMecanic : MonoBehaviour {
 		// -- If Plant Defence Unit, Increase Own Health
 
 		if (transform.GetComponent<PlantDefenseUnit> () != null) {
-			transform.GetComponent<HealthManager> ().currentHealth += 0.001f;
+			transform.GetComponent<HealthManager> ().currentHealth += 0.01f;
 		}
 
 		// -- If Heart
