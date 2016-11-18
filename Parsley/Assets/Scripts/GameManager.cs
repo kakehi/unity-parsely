@@ -14,6 +14,8 @@ public class GameManager : MonoBehaviour {
 	public GameObject plantSeedStorage;
 	public GameObject[] plantSeeders;
 	public GameObject[] allPlants;
+	public int[] AlienSpawnTimings;
+	public int[] AlienSpawnNumbersTimings;
 
 	// -- Alien Spawn
 	public GameObject[] allAliens;
@@ -39,6 +41,11 @@ public class GameManager : MonoBehaviour {
 	float UISliderPosRate;
 	float UIHeartRate;
 	public GameObject UIHeartTimingPrefab;
+
+	public GameObject UIReplayButton;
+
+	bool Ended = false;
+
 	// -- Time when game ends
 	public float TotalGameTime;
 	float GameTimeCounter;
@@ -46,6 +53,13 @@ public class GameManager : MonoBehaviour {
 	// -- Opening
 	bool opening = true;
 	int letterCounter = 7;
+
+
+	void Awake() {
+		Application.targetFrameRate = 30;
+	}
+
+
 
 	// Use this for initialization
 	void Start () {
@@ -78,15 +92,15 @@ public class GameManager : MonoBehaviour {
 		// UI ELEMENT
 
 		// Rate of Game Time
-		UISliderScaleRate = 1.0f/TotalGameTime;
-		UISliderPosRate = 6.22f/TotalGameTime;
+		UISliderScaleRate = 1.02f/TotalGameTime;
+		UISliderPosRate = 11.05f/TotalGameTime;
 
 		// Rate of Heart Spawner
-		int HeartTimes = 0;
+		/*int HeartTimes = 0;
 		for (int i = 0; i < HeartsAppearanceTimings.Length; i++) {
 			HeartTimes += HeartsAppearanceTimings [i];
 		}
-		UIHeartRate = HeartTimes/TotalGameTime;
+		UIHeartRate = HeartTimes/TotalGameTime;*/
 
 		// -- Make UI Default
 		MakeUIDefault();
@@ -105,9 +119,17 @@ public class GameManager : MonoBehaviour {
 
 		// -- if tapped or clicked
 		if (Input.GetMouseButtonDown (0)) {
-			
+
 			// -- Update my mouse position
 			currentMousePosition = Camera.main.ScreenToWorldPoint (new Vector3 (Input.mousePosition.x, Input.mousePosition.y, 15));
+
+
+			// -- If ended, reloada
+			if(Ended){
+				if (Vector3.Distance (currentMousePosition, UIReplayButton.transform.position) < 2)
+					Application.LoadLevel(Application.loadedLevel);
+			}
+
 
 			// -- If it's at the opening, check if any plants are close to the Input
 			if (letterCounter > 0) {
@@ -175,13 +197,15 @@ public class GameManager : MonoBehaviour {
 				// -- Update Alliens Accelerator
 				for (int k = 0; k < plantSeeders.Length; k++) {
 					if (allPlants [k].GetComponent<HealthManager> ().active){
-						allPlants [k].GetComponent<MovingMecanic> ().flockingAccelerator = 1.2f;
+						float tempDist = Vector3.Distance (allPlants [k].transform.position, currentMousePosition);
+						if (tempDist < 2.0f)
+							tempDist = 2.0f;
+						allPlants [k].GetComponent<MovingMecanic> ().flockingAccelerator = 5.0f / tempDist;
 						allPlants [k].GetComponent<MovingMecanic> ().flockingRotationAccelerator = 2.5f;
 					}
 				}
 
 			}
-
 
 		}
 
@@ -205,7 +229,8 @@ public class GameManager : MonoBehaviour {
 	
 
 		// -- Update UI Element
-		UpdateUI();
+		if(!opening)
+			UpdateUI();
 	}
 
 
@@ -250,10 +275,15 @@ public class GameManager : MonoBehaviour {
 	public void BeginGame (){
 
 		// -- Start Spawn Plant Seeder
-		for(int i=0; i<2; i++){
-			SpawnSeeder(new Vector3 (Random.Range (-rangeX, rangeX) * 0.5f, 0, Random.Range (-rangeZ, rangeZ) * 0.3f));
-		}
+		/*for(int i=0; i<2; i++){
 
+			Vector3 tempPos = new Vector3 (Random.Range (-rangeX, 0) * 0.5f, 0, Random.Range (-rangeZ, 0) * 0.3f);
+
+			SpawnSeeder();
+		}*/
+			
+		SpawnSeeder(new Vector3 (Random.Range (-rangeX, 0) * 0.5f, 0, Random.Range (-rangeZ, 0) * 0.3f));
+		//SpawnSeeder(new Vector3 (Random.Range (0, rangeX) * 0.5f, 0, Random.Range (0, rangeZ) * 0.3f));
 
 		// -- Start Spawning Aliens
 		StartCoroutine(SpawnAlienLogic(5));
@@ -267,12 +297,17 @@ public class GameManager : MonoBehaviour {
 	// SPAWN SEEDER
 
 	public void SpawnSeeder(Vector3 pos){
-
+		
 		int i = 0;
 		while (i<plantSeeders.Length) {
 			// -- if alien is not currently active, activate them
 			if (!plantSeeders [i].GetComponent<HealthManager> ().active) {
+				plantSeeders [i].GetComponent<HealthManager> ().onStage = true;
 				plantSeeders [i].GetComponent<HealthManager> ().active = true;
+				plantSeeders [i].GetComponent<HealthManager> ().MakeDefault ();
+				plantSeeders [i].GetComponent<HealthManager> ().transform.localScale = new Vector3 (0, 0, 0);
+				plantSeeders [i].GetComponent<PlantSeedUnit> ().seeder.transform.eulerAngles = new Vector3(90, Random.Range (0, 360), 0); 
+				plantSeeders [i].GetComponent<PlantSeedUnit> ().currentScale = 0;
 				plantSeeders [i].GetComponent<Plant> ().maxChild = 5;
 				plantSeeders [i].transform.position = pos;
 				plantSeeders [i].transform.parent = activePlant.transform;
@@ -283,25 +318,34 @@ public class GameManager : MonoBehaviour {
 		}
 
 	}
-
+		
 
 
 	// SPAWN ALIEN
+
+	int AlienCounter = 0;
 
 	IEnumerator SpawnAlienLogic(int spawnCounter){
 
 		while (true) {
 
-			SpawnAlien (spawnCounter);
+			yield return new WaitForSeconds (AlienSpawnTimings[AlienCounter]);
 
-			yield return new WaitForSeconds (32);
+			SpawnAlien (AlienSpawnNumbersTimings[AlienCounter]);
+
+
+
+			if(AlienCounter < AlienSpawnTimings.Length)
+				AlienCounter++;
 		}
 
 	}
 
+
 	void SpawnAlien(int spawnCounter){
 
 		int i = 0;
+
 		while (i < spawnCounter) {
 
 			// -- if alien is not currently active, activate them
@@ -352,7 +396,8 @@ public class GameManager : MonoBehaviour {
 
 
 			// Move to next waiting time.
-			currentHeartSpawnedCount++;
+			if(currentHeartSpawnedCount < HeartsAppearanceTimings.Length)
+				currentHeartSpawnedCount++;
 		}
 	}
 
@@ -366,11 +411,11 @@ public class GameManager : MonoBehaviour {
 		GameTimeCounter = 0;
 
 		// Make Hear Timing UI
-		for (int i = 0; i < HeartsAppearanceTimings.Length; i++) {
+		/*for (int i = 0; i < HeartsAppearanceTimings.Length; i++) {
 			GameObject TempUI = Instantiate (UIHeartTimingPrefab);
 			TempUI.transform.parent = UISliderSprite.transform.parent;
 			TempUI.transform.localPosition = new Vector3 (HeartsAppearanceTimings[i] * UIHeartRate * 6.21f, 1.0f, 0);
-		}
+		}*/
 
 	}
 
@@ -381,10 +426,15 @@ public class GameManager : MonoBehaviour {
 
 		if (GameTimeCounter < TotalGameTime)
 			GameTimeCounter++;
+		else {
+			UIReplayButton.gameObject.SetActive (true);
+			Ended = true;
+		}
 
 		// -- Update Slider Scale and Position as Slider Progresses
-		UISliderSprite.transform.localScale = new Vector3 (GameTimeCounter * UISliderScaleRate, 0.1f, 0.2f);
-		UISliderSprite.transform.localPosition = new Vector3 (GameTimeCounter * UISliderPosRate, 1f, 1.11f);
+		UISliderSprite.transform.localScale = new Vector3 (1, GameTimeCounter * UISliderScaleRate, 0.2f);
+		UISliderSprite.transform.localPosition = new Vector3 (6.22f, 1f, GameTimeCounter * UISliderPosRate-0.1f);
+
 	}
 
 }

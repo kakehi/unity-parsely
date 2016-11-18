@@ -67,7 +67,7 @@ public class MovingMecanic : MonoBehaviour {
 		if(transform.tag == "Plant"){
 			damageAttack = 0.4f;
 		}else if(transform.tag == "Alien"){
-			damageAttack = 0.005f;
+			damageAttack = 0.01f;
 		}
 	}
 	
@@ -203,10 +203,6 @@ public class MovingMecanic : MonoBehaviour {
 				
 				bool didHitSomething = Physics.Raycast(theRay, out hit, rayTraceSize, targetLayer);
 
-				if (transform.tag != null && transform.tag == "Alien") {
-					Debug.DrawRay (transform.position, rayDirection);
-					Debug.Log (hit.transform);
-				}
 
 				if (didHitSomething && hit.transform != null){
 					
@@ -215,7 +211,9 @@ public class MovingMecanic : MonoBehaviour {
 
 						// -- Check if the hit target is NOT alive
 
-						if(hit.transform.GetComponent<HealthManager>() != null && !hit.transform.GetComponent<HealthManager>().justDied || hit.transform.tag == "Heart")
+						if(hit.transform.GetComponent<HealthManager>() != null && 
+							!hit.transform.GetComponent<HealthManager>().justDied && 
+							hit.transform.GetComponent<HealthManager>().active || hit.transform.tag == "Heart")
 
 						
 							// -- Make sure hit object has target tag

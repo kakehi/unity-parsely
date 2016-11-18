@@ -54,6 +54,8 @@ public class Plant : MonoBehaviour {
 			branchMaxAnfgle = Mathf.PI * 7 / 8 + transform.rotation.eulerAngles.y;
 		}
 
+	
+
 
 	}
 	

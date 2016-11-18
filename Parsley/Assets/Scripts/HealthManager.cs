@@ -23,6 +23,10 @@ public class HealthManager : MonoBehaviour {
 	// -- Whether if it's on stage (Could be dead for after effects)
 	public bool onStage = false;
 
+	// -- show effects when get damage
+	public bool showEffectPerDamage = false;
+	bool gotDamage = false;
+
 	// -- if just died, this bool becomes true. animate the effect and die.
 	public bool justDied = false;
 
@@ -35,6 +39,10 @@ public class HealthManager : MonoBehaviour {
 
 		// Updating Health
 		currentHealth = health;
+
+		// Randomize Death Effect Sprite
+		if(DeathEffect != null)
+			DeathEffect.transform.eulerAngles = new Vector3 (90, Random.Range(0,360), 0);
 
 		UpdateScale ();
 
@@ -51,13 +59,30 @@ public class HealthManager : MonoBehaviour {
 		if(!recoverable && !justDied)
 			UpdateScale ();
 
+		// Show Effects
+		if(showEffectPerDamage && gotDamage) {
+			deathEffectValue += 0.03f;
+			DeathEffect.transform.localScale = new Vector3 (deathEffectValue, deathEffectValue, deathEffectValue);
+			DeathEffect.GetComponent<SpriteRenderer> ().color = new Color (1, 1, 1, 1 - deathEffectValue/2f);
+			if (deathEffectValue > 2.0f) {
+				deathEffectValue = 0;
+				gotDamage = false;
+			}
+		}
 
 		// Death Effect
 		if (DeathEffect != null && justDied) {
-			deathEffectValue += 0.01f;
+			deathEffectValue += 0.03f;
 			DeathEffect.transform.localScale = new Vector3 (deathEffectValue, deathEffectValue, deathEffectValue);
-			DeathEffect.GetComponent<SpriteRenderer> ().color = new Color (1, 1, 1, 1 - deathEffectValue);
-			if (deathEffectValue > 1.0f) {
+			DeathEffect.GetComponent<SpriteRenderer> ().color = new Color (1, 1, 1, 1 - deathEffectValue/2f);
+			DeathEffect.transform.eulerAngles = new Vector3 (90, Random.Range(0,360), 0);
+			// -- If it is plant... call the dead function and make them scale 0, randomly rotate;
+			if (transform.tag == "PlantSeed") {
+				DispatchAllChildPlants ();
+				transform.localScale = new Vector3 (0, 0, 0);
+			}
+
+			if (deathEffectValue > 2.0f) {
 				MakeDefault ();
 				onStage = false;
 			}
@@ -66,6 +91,8 @@ public class HealthManager : MonoBehaviour {
 
 	// Receiving Damages
 	public void GetDamage(float Damage){
+
+		gotDamage = true;
 
 		currentHealth -= Damage;
 
@@ -128,5 +155,14 @@ public class HealthManager : MonoBehaviour {
 			transform.GetComponent<PlantDefenseUnit> ().lifeBranchLocalScale = new Vector3 (currentHealth/2.0f, 2.0f, 1.0f);
 		}
 
+	}
+
+	void DispatchAllChildPlants (){
+		int i = 0;
+		while(i < GMgameManager.allPlants.Length){
+			if(GMgameManager.allPlants[i].GetComponent<Plant>().myParentSeed == transform.gameObject)
+				GMgameManager.allPlants[i].GetComponent<Plant> ().dispatchPlant ();
+			i++;
+		}
 	}
 }

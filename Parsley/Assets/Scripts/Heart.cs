@@ -30,10 +30,10 @@ public class Heart : MonoBehaviour {
 
 		// -- Update the scale of heart
 		transform.localScale = new Vector3 (currentHeartScale, currentHeartScale, currentHeartScale);
-		graphicSprite.GetComponent<SpriteRenderer> ().material.color = new Color (1f, 1f, 1f, 1.0f - currentHeartScale/3.0f);
+		graphicSprite.GetComponent<SpriteRenderer> ().material.color = new Color (1f, 1f, 1f, 1.0f - currentHeartScale/2.5f);
 
 
-		if(1.0f - currentHeartScale/3.0f < 0.05f){
+		if(1.0f - currentHeartScale/2.5f < 0.05f){
 			GMgameManager.SpawnSeeder (transform.position);
 			MakeDefault();
 		}
